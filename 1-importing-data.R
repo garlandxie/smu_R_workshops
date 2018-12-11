@@ -10,6 +10,19 @@ install.packages(c("readr", "readxl"))
 library(readr)   # for reading in csv files 
 library(readxl)  # for reading in excel files 
 
+# Some notes on libraries
+
+# Installing libraries depend on the current version of R installed in
+# your laptop. Remember that certain people update these libraries and 
+# it varies on the version of R
+
+# Bottom-right window of R studio shows the list of libraries 
+# currently installed in R
+# quick way to check what's installed or not (and their versions)
+
+# All R libraries should contain documentation for each respective
+# function. You can check these for more info about what they do
+
 # Import data -------------------------------------------------------------
 
 # Importing data comes in many shapes and sizes in R
@@ -20,7 +33,6 @@ library(readxl)  # for reading in excel files
 
 # In my experience, a lot of people import their data either through:
   # Excel 
-  # Google spreadsheets
   # Comma-seprated delimited files(CSV)
 # So we'll just use these two examples for today
   # Each of these two examples have their own advantages and disadvantages
@@ -34,73 +46,87 @@ library(readxl)  # for reading in excel files
   # plus, the simplicity of this format means a smaller file size 
 
 # strings are factors by default
-df_csv1 <- read.csv(file_name)
+catdf1_csv <- read.csv("cat_stuff_by_commas.csv")
 
 # automatically: strings are NOT factors (which is good)
-df_csv2 <- read_csv(file_name)
+catdf2_csv <- read_csv("cat_stuff_by_commas.csv")
+
+# I like doing sanity checks so let's check if every cells is
+# equal between both data-frames (remember: the results should be TRUE)
+all(catdf1_csv == catdf2_csv)
+
+# Hmm. looks like we have missing values (NA) in our data-sets
+# We can just remove missing values for now
+# Looks like both read_csv and read.csv interpret the remarks
+# column differently (characters vs factors)
+all(catdf1_csv == catdf2_csv, na.rm = TRUE) 
 
 # a little fancier: telling R what data types for each column
 # why: by default, read_csv tries to guess what the data types are
 # in some cases, you might need to tell R to change into a factor 
 # e.g., experimental treatments are masked as integers rather than factors
-df_csv3 <- read_csv(file_name, col_types = list(col_double(),
-                                               col_character()))
+cat_df2_csv <- read_csv("cat_stuff_by_commas.csv", 
+                    col_types = cols(cat_ID = col_double(),
+                                     cat_names = col_character(),
+                                     height_cm = col_double(),
+                                     weight_lbs = col_double(),
+                                     remarks = col_character()
+                                    )
+                    )
 
 # Importing excel files ----------------------------------------------------
 
-# Unlike csv files, excel files are a bit more complex
-  # Different work-sheets piled into one file 
-df_xlsx <- read_excel(file_name, sheet = "hi") # avoiding using numbers
+# Unlike csv files, excel files have multiple work-sheets
+catdf1_xls <- read_excel("cat_stuff_in_excel.xlsx", sheet = 1) 
 
-# similarly, we can use explicit column specifications
-df_xlsx <- read_excel(file_name,
-                      sheet = "hi",
-                      cols_types = list(col_double(),
-                                        col_character()))
+# More robust: call the sheet name instead of the number
+# You might accidentally switch the worksheets around (happened to me)
+# So this method is easier to reproduce if someone else looked at your code
+catdf2_xls <- read_excel("cat_stuff_in_excel.xlsx", sheet = "cat_traits")
 
-# Importing Google spreadsheets ------------------------------------------------
+# Sanity check
+all(catdf1_xls == catdf2_xls, na.rm = TRUE)
 
-# if you'd like, you can import google spreadsheet files
-# sometimes, entering data through the cloud is more beneficial than excel files
-# such as ease of portability (can access files whenever you have internet)
+# Similarly, R will parse both CSV and XLS into similar data structures (df)
+# Should hold true for the datasets we've brought in from readr and readxl
+all(catdf2_csv == catdf2_xls, na.rm = TRUE)
 
 # Inspecting data frames -------------------------------------------------------
 
 # chances are you'll be using data frames a lot when you're using R
 # that being said, it might be a good idea to show some functions 
-# that let you know more about the data frames you'll be working with
+# that let you know explore more about the data frames you'll be working with
 
 # 1) Check the packaging: did you import the right data?
 # One way to verify this is to check the number of rows and columns
 
-dim(df_csv1)  # both rows and columns 
-nrow(df_csv1) # number of rows
-ncol(df_csv1) # number of columns
+dim(catdf2_csv)  # both rows and columns 
+nrow(catdf2_csv) # number of rows
+ncol(catdf2_csv) # number of columns
 
 # 2) Check the head and tails
 # in some cases, you might have an extra comment line on your worksheet
 # you don't want to catch you by surprise so double-check this first
 
-head(df_csv1, n = 10) # first ten rows (use the n argument for big datasets)
-tail(df_csv1, n = 10) # first ten rows (last ten rows)
+head(catdf2_csv, n = 10) # first ten rows (use the n argument for big datasets)
+tail(catdf2_csv, n = 10) # first ten rows (last ten rows)
 
 
 # 3) Check the structure of the data-frame
 # Verify that your columns have the correct data types (up to the analyst)
+str(catdf1_csv)
 
-str(df_csv1)
-summary(df_csv1)
+# 4) Check the summary of the dataset
+# aka summary statistics
+# Quick look at ranges, averages and medians to get a sense of your data
+summary(catdf2_csv)
 
-# Statistical analyses ---------------------------------------------------------
+# 5) Check your n's per categorical variable 
+# Like seeing if you have replicate ID numbers
+# Not very useful for numeric values tbh
+table(catdf2_csv$cat_ID) 
 
-# Assuming your data is tidy, you can run statistical analyses using functions
-# already installed in R
-
-# a popular one is a "t-test" where you're interested in determing
-# if two populations differ in terms of an averaged measure 
-
-# Student's t-test
-t.test(df_csv1$height, df_csv2$width)
-
-# Plottig ----------------------------------------------------------------------
-
+# 6) Plotting histograms
+# What kind of shape does your sample form? 
+# You might see a classic bell-curved shape (normal distribution)
+hist_heigt <- hist(catdf2_csv$height_cm, main = "", xlab = "height (cm)")
